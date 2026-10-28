@@ -1,0 +1,9 @@
+version: v2
+clean: true
+plugins:
+  - local: protoc-gen-dart
+    out: ../dart/lib
+inputs:
+  - directory: .
+    paths:
+      - native

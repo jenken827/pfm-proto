@@ -1,0 +1,11 @@
+# Dart 包：生成物入库，本地只忽略构建缓存；包不锁版本（消费方各自解析）
+dart/.dart_tool/
+dart/pubspec.lock
+
+# Go 构建产物
+/pfm-proto
+*.test
+
+# 本地工作区文件（联调时用 go work init 生成，不入库）
+go.work
+go.work.sum

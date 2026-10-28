@@ -1,0 +1,22 @@
+# pfm 应用侧 proto 的唯一真理源
+#
+# native/ —— REST 数据结构、前端表单渲染、ORM 实体（后端与 Flutter 客户端共用）
+# sgorm/  —— protoc-gen-sgorm 的选项定义（后端生成 GORM 实体时用）
+#
+# 生成物两侧都入库（Go 在 proto/gen/，Dart 在 dart/lib/）：消费方不该为了构建
+# 去装 buf/protoc。改完 .proto 后跑 ./dev.sh proto 并提交生成物。
+version: v2
+modules:
+  - path: .
+lint:
+  use:
+    - STANDARD
+  except:
+    - PACKAGE_VERSION_SUFFIX
+    - ENUM_VALUE_PREFIX
+    - RPC_REQUEST_RESPONSE_UNIQUE
+breaking:
+  use:
+    - FILE
+deps:
+  - buf.build/bufbuild/protovalidate

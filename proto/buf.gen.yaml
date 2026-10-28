@@ -1,0 +1,11 @@
+version: v2
+# clean: true 会先清空输出目录；proto/gen 是生成物，可以整体重建
+clean: true
+plugins:
+  # 只生成数据结构：传输层是 REST/JSON（宿主 server/route_rest.go 显式维护路由）
+  - local: protoc-gen-go
+    out: gen
+    opt:
+      - paths=source_relative
+inputs:
+  - directory: .

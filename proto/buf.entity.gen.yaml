@@ -1,0 +1,15 @@
+version: v2
+# 生成宿主的 GORM 实体（protoc-gen-sgorm）。
+#
+# 实体是 proto 的 Go 投影：列定义、gorm tag、TableName()、ToPB()/FromXxx() 全部由
+# native/*.proto 上的 (sgorm.opts) / (sgorm.field).tag 注解推导，没有额外信息，
+# 所以和 pb.go 一起放在本仓库生成并入库（消费方 clone 下来就能编译，不必装 buf /
+# protoc-gen-sgorm，也不会出现"proto 改了、实体忘了重生成"的静默漂移）。
+#
+# 输出 proto/gen/entity/；package=entity 是唯一固定项。
+clean: true
+plugins:
+  - local: protoc-gen-sgorm
+    out: gen/entity
+    opt:
+      - package=entity
