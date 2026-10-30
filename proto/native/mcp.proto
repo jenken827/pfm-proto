@@ -1,0 +1,41 @@
+syntax = "proto3";
+
+package native;
+
+import "google/protobuf/timestamp.proto";
+import "sgorm/options.proto";
+
+option go_package = "github.com/jenken827/pfm-proto/proto/gen/native";
+
+// McpToken MCP 访问令牌
+//
+// MCP 客户端（AI 应用）连 /mcp 时用的凭据，与登录 JWT 并列、互不替代：
+// JWT 给人和 App，令牌给长期运行的客户端。库里只存明文的 sha256，明文只在
+// 创建时打印一次；令牌只对 /mcp 生效，不能被拿去调 REST / WebDAV。
+//
+// 权限是"最小可用"三件套：读、写、可见根目录。写还要宿主配置 mcp.allow_write
+// 也打开才生效（两者是"与"关系）。可见根目录非空时，令牌视角的 "/" 就是该目录，
+// 路径解析天然出不去（与 WebDAV 账号的 root_file_id 同一思路）。
+message McpToken {
+  option (sgorm.opts).ormable = true;
+
+  optional uint32 id = 1 [(sgorm.field).tag = {primary_key: true, auto_increment: true}];
+  optional google.protobuf.Timestamp created_at = 2 [(sgorm.field).tag = {auto_create_time: true}];
+  optional google.protobuf.Timestamp updated_at = 3 [(sgorm.field).tag = {auto_update_time: true}];
+  // 归属用户 ID（UUID，关联 users.user_id）
+  optional string owner_id = 4 [(sgorm.field).tag = {not_null: true size: 36 index: "idx_mt_uid"}];
+  // 客户端标签（如 laptop / cursor，仅展示用）
+  optional string name = 5 [(sgorm.field).tag = {not_null: true default: "''" size: 64}];
+  // 令牌明文的 sha256（64 位小写十六进制，全局唯一）
+  optional string token_hash = 6 [(sgorm.field).tag = {not_null: true size: 64 unique_index: "idx_mt_hash"}];
+  // 是否允许读工具（list / stat / read / download_link 等）
+  optional bool allow_read = 7 [(sgorm.field).tag = {not_null: true default: "true"}];
+  // 是否允许写工具（建目录 / 写入 / 移动 / 改名 / 删除进回收站 / 分享）
+  optional bool allow_write = 8 [(sgorm.field).tag = {not_null: true default: "false"}];
+  // 可见根目录 file_id（空串 = 用户根，即令牌看到整棵树）
+  optional string root_folder_id = 9 [(sgorm.field).tag = {not_null: true default: "''" type: "char(36)"}];
+  // 过期时间（为空表示不过期）
+  optional google.protobuf.Timestamp expires_at = 10;
+  // 最后使用时间（鉴权成功时节流更新）
+  optional google.protobuf.Timestamp last_used_at = 11;
+}
