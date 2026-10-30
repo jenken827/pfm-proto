@@ -164,11 +164,415 @@ func (x *McpToken) GetLastUsedAt() *timestamppb.Timestamp {
 	return nil
 }
 
+// McpTokenInfo 令牌的对外视图（不含 token_hash，明文只在创建时返回一次）
+type McpTokenInfo struct {
+	state protoimpl.MessageState `protogen:"open.v1"`
+	Id    *uint32                `protobuf:"varint,1,opt,name=id,proto3,oneof" json:"id,omitempty"`
+	// 客户端标签（如 laptop / cursor）
+	Name *string `protobuf:"bytes,2,opt,name=name,proto3,oneof" json:"name,omitempty"`
+	// 归属用户 ID
+	OwnerId *string `protobuf:"bytes,3,opt,name=owner_id,json=ownerId,proto3,oneof" json:"owner_id,omitempty"`
+	// 归属用户名（展示用）
+	OwnerName *string `protobuf:"bytes,4,opt,name=owner_name,json=ownerName,proto3,oneof" json:"owner_name,omitempty"`
+	// 是否允许读工具
+	AllowRead *bool `protobuf:"varint,5,opt,name=allow_read,json=allowRead,proto3,oneof" json:"allow_read,omitempty"`
+	// 是否允许写工具（还需宿主配置 mcp.allow_write）
+	AllowWrite *bool `protobuf:"varint,6,opt,name=allow_write,json=allowWrite,proto3,oneof" json:"allow_write,omitempty"`
+	// 可见根目录 file_id（空 = 整棵树）
+	RootFolderId *string `protobuf:"bytes,7,opt,name=root_folder_id,json=rootFolderId,proto3,oneof" json:"root_folder_id,omitempty"`
+	// 可见根目录路径（展示用，可空）
+	RootFolderPath *string                `protobuf:"bytes,8,opt,name=root_folder_path,json=rootFolderPath,proto3,oneof" json:"root_folder_path,omitempty"`
+	CreatedAt      *timestamppb.Timestamp `protobuf:"bytes,9,opt,name=created_at,json=createdAt,proto3,oneof" json:"created_at,omitempty"`
+	ExpiresAt      *timestamppb.Timestamp `protobuf:"bytes,10,opt,name=expires_at,json=expiresAt,proto3,oneof" json:"expires_at,omitempty"`
+	LastUsedAt     *timestamppb.Timestamp `protobuf:"bytes,11,opt,name=last_used_at,json=lastUsedAt,proto3,oneof" json:"last_used_at,omitempty"`
+	// 是否已过期（过期令牌仍在列表里，方便看清为什么连不上）
+	Expired       *bool `protobuf:"varint,12,opt,name=expired,proto3,oneof" json:"expired,omitempty"`
+	unknownFields protoimpl.UnknownFields
+	sizeCache     protoimpl.SizeCache
+}
+
+func (x *McpTokenInfo) Reset() {
+	*x = McpTokenInfo{}
+	mi := &file_native_mcp_proto_msgTypes[1]
+	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+	ms.StoreMessageInfo(mi)
+}
+
+func (x *McpTokenInfo) String() string {
+	return protoimpl.X.MessageStringOf(x)
+}
+
+func (*McpTokenInfo) ProtoMessage() {}
+
+func (x *McpTokenInfo) ProtoReflect() protoreflect.Message {
+	mi := &file_native_mcp_proto_msgTypes[1]
+	if x != nil {
+		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+		if ms.LoadMessageInfo() == nil {
+			ms.StoreMessageInfo(mi)
+		}
+		return ms
+	}
+	return mi.MessageOf(x)
+}
+
+// Deprecated: Use McpTokenInfo.ProtoReflect.Descriptor instead.
+func (*McpTokenInfo) Descriptor() ([]byte, []int) {
+	return file_native_mcp_proto_rawDescGZIP(), []int{1}
+}
+
+func (x *McpTokenInfo) GetId() uint32 {
+	if x != nil && x.Id != nil {
+		return *x.Id
+	}
+	return 0
+}
+
+func (x *McpTokenInfo) GetName() string {
+	if x != nil && x.Name != nil {
+		return *x.Name
+	}
+	return ""
+}
+
+func (x *McpTokenInfo) GetOwnerId() string {
+	if x != nil && x.OwnerId != nil {
+		return *x.OwnerId
+	}
+	return ""
+}
+
+func (x *McpTokenInfo) GetOwnerName() string {
+	if x != nil && x.OwnerName != nil {
+		return *x.OwnerName
+	}
+	return ""
+}
+
+func (x *McpTokenInfo) GetAllowRead() bool {
+	if x != nil && x.AllowRead != nil {
+		return *x.AllowRead
+	}
+	return false
+}
+
+func (x *McpTokenInfo) GetAllowWrite() bool {
+	if x != nil && x.AllowWrite != nil {
+		return *x.AllowWrite
+	}
+	return false
+}
+
+func (x *McpTokenInfo) GetRootFolderId() string {
+	if x != nil && x.RootFolderId != nil {
+		return *x.RootFolderId
+	}
+	return ""
+}
+
+func (x *McpTokenInfo) GetRootFolderPath() string {
+	if x != nil && x.RootFolderPath != nil {
+		return *x.RootFolderPath
+	}
+	return ""
+}
+
+func (x *McpTokenInfo) GetCreatedAt() *timestamppb.Timestamp {
+	if x != nil {
+		return x.CreatedAt
+	}
+	return nil
+}
+
+func (x *McpTokenInfo) GetExpiresAt() *timestamppb.Timestamp {
+	if x != nil {
+		return x.ExpiresAt
+	}
+	return nil
+}
+
+func (x *McpTokenInfo) GetLastUsedAt() *timestamppb.Timestamp {
+	if x != nil {
+		return x.LastUsedAt
+	}
+	return nil
+}
+
+func (x *McpTokenInfo) GetExpired() bool {
+	if x != nil && x.Expired != nil {
+		return *x.Expired
+	}
+	return false
+}
+
+// CreateMcpTokenReq 签发令牌
+type CreateMcpTokenReq struct {
+	state protoimpl.MessageState `protogen:"open.v1"`
+	// 客户端标签（必填，便于日后撤销时认出来）
+	Name *string `protobuf:"bytes,1,opt,name=name,proto3,oneof" json:"name,omitempty"`
+	// 是否允许写工具（默认只读）
+	AllowWrite *bool `protobuf:"varint,2,opt,name=allow_write,json=allowWrite,proto3,oneof" json:"allow_write,omitempty"`
+	// 可见根目录 file_id（空 = 整棵树；必须是自己的目录）
+	RootFolderId *string `protobuf:"bytes,3,opt,name=root_folder_id,json=rootFolderId,proto3,oneof" json:"root_folder_id,omitempty"`
+	// 有效期（天，0 = 不过期）
+	ExpiresInDays *uint32 `protobuf:"varint,4,opt,name=expires_in_days,json=expiresInDays,proto3,oneof" json:"expires_in_days,omitempty"`
+	unknownFields protoimpl.UnknownFields
+	sizeCache     protoimpl.SizeCache
+}
+
+func (x *CreateMcpTokenReq) Reset() {
+	*x = CreateMcpTokenReq{}
+	mi := &file_native_mcp_proto_msgTypes[2]
+	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+	ms.StoreMessageInfo(mi)
+}
+
+func (x *CreateMcpTokenReq) String() string {
+	return protoimpl.X.MessageStringOf(x)
+}
+
+func (*CreateMcpTokenReq) ProtoMessage() {}
+
+func (x *CreateMcpTokenReq) ProtoReflect() protoreflect.Message {
+	mi := &file_native_mcp_proto_msgTypes[2]
+	if x != nil {
+		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+		if ms.LoadMessageInfo() == nil {
+			ms.StoreMessageInfo(mi)
+		}
+		return ms
+	}
+	return mi.MessageOf(x)
+}
+
+// Deprecated: Use CreateMcpTokenReq.ProtoReflect.Descriptor instead.
+func (*CreateMcpTokenReq) Descriptor() ([]byte, []int) {
+	return file_native_mcp_proto_rawDescGZIP(), []int{2}
+}
+
+func (x *CreateMcpTokenReq) GetName() string {
+	if x != nil && x.Name != nil {
+		return *x.Name
+	}
+	return ""
+}
+
+func (x *CreateMcpTokenReq) GetAllowWrite() bool {
+	if x != nil && x.AllowWrite != nil {
+		return *x.AllowWrite
+	}
+	return false
+}
+
+func (x *CreateMcpTokenReq) GetRootFolderId() string {
+	if x != nil && x.RootFolderId != nil {
+		return *x.RootFolderId
+	}
+	return ""
+}
+
+func (x *CreateMcpTokenReq) GetExpiresInDays() uint32 {
+	if x != nil && x.ExpiresInDays != nil {
+		return *x.ExpiresInDays
+	}
+	return 0
+}
+
+// CreateMcpTokenResp 签发结果（plaintext 只在这里出现一次）
+type CreateMcpTokenResp struct {
+	state protoimpl.MessageState `protogen:"open.v1"`
+	Token *McpTokenInfo          `protobuf:"bytes,1,opt,name=token,proto3,oneof" json:"token,omitempty"`
+	// 令牌明文，形如 pfm_mcp_xxx；关闭页面后就再也看不到
+	Plaintext     *string `protobuf:"bytes,2,opt,name=plaintext,proto3,oneof" json:"plaintext,omitempty"`
+	unknownFields protoimpl.UnknownFields
+	sizeCache     protoimpl.SizeCache
+}
+
+func (x *CreateMcpTokenResp) Reset() {
+	*x = CreateMcpTokenResp{}
+	mi := &file_native_mcp_proto_msgTypes[3]
+	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+	ms.StoreMessageInfo(mi)
+}
+
+func (x *CreateMcpTokenResp) String() string {
+	return protoimpl.X.MessageStringOf(x)
+}
+
+func (*CreateMcpTokenResp) ProtoMessage() {}
+
+func (x *CreateMcpTokenResp) ProtoReflect() protoreflect.Message {
+	mi := &file_native_mcp_proto_msgTypes[3]
+	if x != nil {
+		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+		if ms.LoadMessageInfo() == nil {
+			ms.StoreMessageInfo(mi)
+		}
+		return ms
+	}
+	return mi.MessageOf(x)
+}
+
+// Deprecated: Use CreateMcpTokenResp.ProtoReflect.Descriptor instead.
+func (*CreateMcpTokenResp) Descriptor() ([]byte, []int) {
+	return file_native_mcp_proto_rawDescGZIP(), []int{3}
+}
+
+func (x *CreateMcpTokenResp) GetToken() *McpTokenInfo {
+	if x != nil {
+		return x.Token
+	}
+	return nil
+}
+
+func (x *CreateMcpTokenResp) GetPlaintext() string {
+	if x != nil && x.Plaintext != nil {
+		return *x.Plaintext
+	}
+	return ""
+}
+
+// ListMcpTokensReq 列出令牌（只列自己的；管理员可指定 owner_id 查他人）
+type ListMcpTokensReq struct {
+	state protoimpl.MessageState `protogen:"open.v1"`
+	// 管理员查指定用户；普通用户忽略此字段
+	OwnerId       *string `protobuf:"bytes,1,opt,name=owner_id,json=ownerId,proto3,oneof" json:"owner_id,omitempty"`
+	unknownFields protoimpl.UnknownFields
+	sizeCache     protoimpl.SizeCache
+}
+
+func (x *ListMcpTokensReq) Reset() {
+	*x = ListMcpTokensReq{}
+	mi := &file_native_mcp_proto_msgTypes[4]
+	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+	ms.StoreMessageInfo(mi)
+}
+
+func (x *ListMcpTokensReq) String() string {
+	return protoimpl.X.MessageStringOf(x)
+}
+
+func (*ListMcpTokensReq) ProtoMessage() {}
+
+func (x *ListMcpTokensReq) ProtoReflect() protoreflect.Message {
+	mi := &file_native_mcp_proto_msgTypes[4]
+	if x != nil {
+		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+		if ms.LoadMessageInfo() == nil {
+			ms.StoreMessageInfo(mi)
+		}
+		return ms
+	}
+	return mi.MessageOf(x)
+}
+
+// Deprecated: Use ListMcpTokensReq.ProtoReflect.Descriptor instead.
+func (*ListMcpTokensReq) Descriptor() ([]byte, []int) {
+	return file_native_mcp_proto_rawDescGZIP(), []int{4}
+}
+
+func (x *ListMcpTokensReq) GetOwnerId() string {
+	if x != nil && x.OwnerId != nil {
+		return *x.OwnerId
+	}
+	return ""
+}
+
+// ListMcpTokensResp 令牌列表（不含明文）
+type ListMcpTokensResp struct {
+	state         protoimpl.MessageState `protogen:"open.v1"`
+	Tokens        []*McpTokenInfo        `protobuf:"bytes,1,rep,name=tokens,proto3" json:"tokens,omitempty"`
+	unknownFields protoimpl.UnknownFields
+	sizeCache     protoimpl.SizeCache
+}
+
+func (x *ListMcpTokensResp) Reset() {
+	*x = ListMcpTokensResp{}
+	mi := &file_native_mcp_proto_msgTypes[5]
+	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+	ms.StoreMessageInfo(mi)
+}
+
+func (x *ListMcpTokensResp) String() string {
+	return protoimpl.X.MessageStringOf(x)
+}
+
+func (*ListMcpTokensResp) ProtoMessage() {}
+
+func (x *ListMcpTokensResp) ProtoReflect() protoreflect.Message {
+	mi := &file_native_mcp_proto_msgTypes[5]
+	if x != nil {
+		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+		if ms.LoadMessageInfo() == nil {
+			ms.StoreMessageInfo(mi)
+		}
+		return ms
+	}
+	return mi.MessageOf(x)
+}
+
+// Deprecated: Use ListMcpTokensResp.ProtoReflect.Descriptor instead.
+func (*ListMcpTokensResp) Descriptor() ([]byte, []int) {
+	return file_native_mcp_proto_rawDescGZIP(), []int{5}
+}
+
+func (x *ListMcpTokensResp) GetTokens() []*McpTokenInfo {
+	if x != nil {
+		return x.Tokens
+	}
+	return nil
+}
+
+// RevokeMcpTokenReq 撤销令牌（删行，立即失效）
+type RevokeMcpTokenReq struct {
+	state         protoimpl.MessageState `protogen:"open.v1"`
+	Id            *uint32                `protobuf:"varint,1,opt,name=id,proto3,oneof" json:"id,omitempty"`
+	unknownFields protoimpl.UnknownFields
+	sizeCache     protoimpl.SizeCache
+}
+
+func (x *RevokeMcpTokenReq) Reset() {
+	*x = RevokeMcpTokenReq{}
+	mi := &file_native_mcp_proto_msgTypes[6]
+	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+	ms.StoreMessageInfo(mi)
+}
+
+func (x *RevokeMcpTokenReq) String() string {
+	return protoimpl.X.MessageStringOf(x)
+}
+
+func (*RevokeMcpTokenReq) ProtoMessage() {}
+
+func (x *RevokeMcpTokenReq) ProtoReflect() protoreflect.Message {
+	mi := &file_native_mcp_proto_msgTypes[6]
+	if x != nil {
+		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+		if ms.LoadMessageInfo() == nil {
+			ms.StoreMessageInfo(mi)
+		}
+		return ms
+	}
+	return mi.MessageOf(x)
+}
+
+// Deprecated: Use RevokeMcpTokenReq.ProtoReflect.Descriptor instead.
+func (*RevokeMcpTokenReq) Descriptor() ([]byte, []int) {
+	return file_native_mcp_proto_rawDescGZIP(), []int{6}
+}
+
+func (x *RevokeMcpTokenReq) GetId() uint32 {
+	if x != nil && x.Id != nil {
+		return *x.Id
+	}
+	return 0
+}
+
 var File_native_mcp_proto protoreflect.FileDescriptor
 
 const file_native_mcp_proto_rawDesc = "" +
 	"\n" +
-	"\x10native/mcp.proto\x12\x06native\x1a\x1fgoogle/protobuf/timestamp.proto\x1a\x13sgorm/options.proto\"\xb2\x06\n" +
+	"\x10native/mcp.proto\x12\x06native\x1a\x13native/common.proto\x1a\x1fgoogle/protobuf/timestamp.proto\x1a\x13sgorm/options.proto\"\xb2\x06\n" +
 	"\bMcpToken\x12\x1f\n" +
 	"\x02id\x18\x01 \x01(\rB\n" +
 	"ʾ\x19\x06\x12\x04\b\x01\x10\x01H\x00R\x02id\x88\x01\x01\x12H\n" +
@@ -204,7 +608,69 @@ const file_native_mcp_proto_rawDesc = "" +
 	"\f_allow_writeB\x11\n" +
 	"\x0f_root_folder_idB\r\n" +
 	"\v_expires_atB\x0f\n" +
-	"\r_last_used_atB1Z/github.com/jenken827/pfm-proto/proto/gen/nativeb\x06proto3"
+	"\r_last_used_at\"\xb4\x05\n" +
+	"\fMcpTokenInfo\x12\x13\n" +
+	"\x02id\x18\x01 \x01(\rH\x00R\x02id\x88\x01\x01\x12\x17\n" +
+	"\x04name\x18\x02 \x01(\tH\x01R\x04name\x88\x01\x01\x12\x1e\n" +
+	"\bowner_id\x18\x03 \x01(\tH\x02R\aownerId\x88\x01\x01\x12\"\n" +
+	"\n" +
+	"owner_name\x18\x04 \x01(\tH\x03R\townerName\x88\x01\x01\x12\"\n" +
+	"\n" +
+	"allow_read\x18\x05 \x01(\bH\x04R\tallowRead\x88\x01\x01\x12$\n" +
+	"\vallow_write\x18\x06 \x01(\bH\x05R\n" +
+	"allowWrite\x88\x01\x01\x12)\n" +
+	"\x0eroot_folder_id\x18\a \x01(\tH\x06R\frootFolderId\x88\x01\x01\x12-\n" +
+	"\x10root_folder_path\x18\b \x01(\tH\aR\x0erootFolderPath\x88\x01\x01\x12>\n" +
+	"\n" +
+	"created_at\x18\t \x01(\v2\x1a.google.protobuf.TimestampH\bR\tcreatedAt\x88\x01\x01\x12>\n" +
+	"\n" +
+	"expires_at\x18\n" +
+	" \x01(\v2\x1a.google.protobuf.TimestampH\tR\texpiresAt\x88\x01\x01\x12A\n" +
+	"\flast_used_at\x18\v \x01(\v2\x1a.google.protobuf.TimestampH\n" +
+	"R\n" +
+	"lastUsedAt\x88\x01\x01\x12\x1d\n" +
+	"\aexpired\x18\f \x01(\bH\vR\aexpired\x88\x01\x01B\x05\n" +
+	"\x03_idB\a\n" +
+	"\x05_nameB\v\n" +
+	"\t_owner_idB\r\n" +
+	"\v_owner_nameB\r\n" +
+	"\v_allow_readB\x0e\n" +
+	"\f_allow_writeB\x11\n" +
+	"\x0f_root_folder_idB\x13\n" +
+	"\x11_root_folder_pathB\r\n" +
+	"\v_created_atB\r\n" +
+	"\v_expires_atB\x0f\n" +
+	"\r_last_used_atB\n" +
+	"\n" +
+	"\b_expired\"\xea\x01\n" +
+	"\x11CreateMcpTokenReq\x12\x17\n" +
+	"\x04name\x18\x01 \x01(\tH\x00R\x04name\x88\x01\x01\x12$\n" +
+	"\vallow_write\x18\x02 \x01(\bH\x01R\n" +
+	"allowWrite\x88\x01\x01\x12)\n" +
+	"\x0eroot_folder_id\x18\x03 \x01(\tH\x02R\frootFolderId\x88\x01\x01\x12+\n" +
+	"\x0fexpires_in_days\x18\x04 \x01(\rH\x03R\rexpiresInDays\x88\x01\x01B\a\n" +
+	"\x05_nameB\x0e\n" +
+	"\f_allow_writeB\x11\n" +
+	"\x0f_root_folder_idB\x12\n" +
+	"\x10_expires_in_days\"\x80\x01\n" +
+	"\x12CreateMcpTokenResp\x12/\n" +
+	"\x05token\x18\x01 \x01(\v2\x14.native.McpTokenInfoH\x00R\x05token\x88\x01\x01\x12!\n" +
+	"\tplaintext\x18\x02 \x01(\tH\x01R\tplaintext\x88\x01\x01B\b\n" +
+	"\x06_tokenB\f\n" +
+	"\n" +
+	"_plaintext\"?\n" +
+	"\x10ListMcpTokensReq\x12\x1e\n" +
+	"\bowner_id\x18\x01 \x01(\tH\x00R\aownerId\x88\x01\x01B\v\n" +
+	"\t_owner_id\"A\n" +
+	"\x11ListMcpTokensResp\x12,\n" +
+	"\x06tokens\x18\x01 \x03(\v2\x14.native.McpTokenInfoR\x06tokens\"/\n" +
+	"\x11RevokeMcpTokenReq\x12\x13\n" +
+	"\x02id\x18\x01 \x01(\rH\x00R\x02id\x88\x01\x01B\x05\n" +
+	"\x03_id2\xcc\x01\n" +
+	"\x0fMcpTokenService\x12=\n" +
+	"\x0eCreateMcpToken\x12\x19.native.CreateMcpTokenReq\x1a\x10.native.BaseResp\x12;\n" +
+	"\rListMcpTokens\x12\x18.native.ListMcpTokensReq\x1a\x10.native.BaseResp\x12=\n" +
+	"\x0eRevokeMcpToken\x12\x19.native.RevokeMcpTokenReq\x1a\x10.native.BaseRespB1Z/github.com/jenken827/pfm-proto/proto/gen/nativeb\x06proto3"
 
 var (
 	file_native_mcp_proto_rawDescOnce sync.Once
@@ -218,21 +684,39 @@ func file_native_mcp_proto_rawDescGZIP() []byte {
 	return file_native_mcp_proto_rawDescData
 }
 
-var file_native_mcp_proto_msgTypes = make([]protoimpl.MessageInfo, 1)
+var file_native_mcp_proto_msgTypes = make([]protoimpl.MessageInfo, 7)
 var file_native_mcp_proto_goTypes = []any{
 	(*McpToken)(nil),              // 0: native.McpToken
-	(*timestamppb.Timestamp)(nil), // 1: google.protobuf.Timestamp
+	(*McpTokenInfo)(nil),          // 1: native.McpTokenInfo
+	(*CreateMcpTokenReq)(nil),     // 2: native.CreateMcpTokenReq
+	(*CreateMcpTokenResp)(nil),    // 3: native.CreateMcpTokenResp
+	(*ListMcpTokensReq)(nil),      // 4: native.ListMcpTokensReq
+	(*ListMcpTokensResp)(nil),     // 5: native.ListMcpTokensResp
+	(*RevokeMcpTokenReq)(nil),     // 6: native.RevokeMcpTokenReq
+	(*timestamppb.Timestamp)(nil), // 7: google.protobuf.Timestamp
+	(*BaseResp)(nil),              // 8: native.BaseResp
 }
 var file_native_mcp_proto_depIdxs = []int32{
-	1, // 0: native.McpToken.created_at:type_name -> google.protobuf.Timestamp
-	1, // 1: native.McpToken.updated_at:type_name -> google.protobuf.Timestamp
-	1, // 2: native.McpToken.expires_at:type_name -> google.protobuf.Timestamp
-	1, // 3: native.McpToken.last_used_at:type_name -> google.protobuf.Timestamp
-	4, // [4:4] is the sub-list for method output_type
-	4, // [4:4] is the sub-list for method input_type
-	4, // [4:4] is the sub-list for extension type_name
-	4, // [4:4] is the sub-list for extension extendee
-	0, // [0:4] is the sub-list for field type_name
+	7,  // 0: native.McpToken.created_at:type_name -> google.protobuf.Timestamp
+	7,  // 1: native.McpToken.updated_at:type_name -> google.protobuf.Timestamp
+	7,  // 2: native.McpToken.expires_at:type_name -> google.protobuf.Timestamp
+	7,  // 3: native.McpToken.last_used_at:type_name -> google.protobuf.Timestamp
+	7,  // 4: native.McpTokenInfo.created_at:type_name -> google.protobuf.Timestamp
+	7,  // 5: native.McpTokenInfo.expires_at:type_name -> google.protobuf.Timestamp
+	7,  // 6: native.McpTokenInfo.last_used_at:type_name -> google.protobuf.Timestamp
+	1,  // 7: native.CreateMcpTokenResp.token:type_name -> native.McpTokenInfo
+	1,  // 8: native.ListMcpTokensResp.tokens:type_name -> native.McpTokenInfo
+	2,  // 9: native.McpTokenService.CreateMcpToken:input_type -> native.CreateMcpTokenReq
+	4,  // 10: native.McpTokenService.ListMcpTokens:input_type -> native.ListMcpTokensReq
+	6,  // 11: native.McpTokenService.RevokeMcpToken:input_type -> native.RevokeMcpTokenReq
+	8,  // 12: native.McpTokenService.CreateMcpToken:output_type -> native.BaseResp
+	8,  // 13: native.McpTokenService.ListMcpTokens:output_type -> native.BaseResp
+	8,  // 14: native.McpTokenService.RevokeMcpToken:output_type -> native.BaseResp
+	12, // [12:15] is the sub-list for method output_type
+	9,  // [9:12] is the sub-list for method input_type
+	9,  // [9:9] is the sub-list for extension type_name
+	9,  // [9:9] is the sub-list for extension extendee
+	0,  // [0:9] is the sub-list for field type_name
 }
 
 func init() { file_native_mcp_proto_init() }
@@ -240,16 +724,22 @@ func file_native_mcp_proto_init() {
 	if File_native_mcp_proto != nil {
 		return
 	}
+	file_native_common_proto_init()
 	file_native_mcp_proto_msgTypes[0].OneofWrappers = []any{}
+	file_native_mcp_proto_msgTypes[1].OneofWrappers = []any{}
+	file_native_mcp_proto_msgTypes[2].OneofWrappers = []any{}
+	file_native_mcp_proto_msgTypes[3].OneofWrappers = []any{}
+	file_native_mcp_proto_msgTypes[4].OneofWrappers = []any{}
+	file_native_mcp_proto_msgTypes[6].OneofWrappers = []any{}
 	type x struct{}
 	out := protoimpl.TypeBuilder{
 		File: protoimpl.DescBuilder{
 			GoPackagePath: reflect.TypeOf(x{}).PkgPath(),
 			RawDescriptor: unsafe.Slice(unsafe.StringData(file_native_mcp_proto_rawDesc), len(file_native_mcp_proto_rawDesc)),
 			NumEnums:      0,
-			NumMessages:   1,
+			NumMessages:   7,
 			NumExtensions: 0,
-			NumServices:   0,
+			NumServices:   1,
 		},
 		GoTypes:           file_native_mcp_proto_goTypes,
 		DependencyIndexes: file_native_mcp_proto_depIdxs,

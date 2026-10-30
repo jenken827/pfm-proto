@@ -2,6 +2,7 @@ syntax = "proto3";
 
 package native;
 
+import "native/common.proto";
 import "google/protobuf/timestamp.proto";
 import "sgorm/options.proto";
 
@@ -38,4 +39,75 @@ message McpToken {
   optional google.protobuf.Timestamp expires_at = 10;
   // 最后使用时间（鉴权成功时节流更新）
   optional google.protobuf.Timestamp last_used_at = 11;
+}
+
+// ==================== 令牌管理接口 ====================
+
+// McpTokenInfo 令牌的对外视图（不含 token_hash，明文只在创建时返回一次）
+message McpTokenInfo {
+  optional uint32 id = 1;
+  // 客户端标签（如 laptop / cursor）
+  optional string name = 2;
+  // 归属用户 ID
+  optional string owner_id = 3;
+  // 归属用户名（展示用）
+  optional string owner_name = 4;
+  // 是否允许读工具
+  optional bool allow_read = 5;
+  // 是否允许写工具（还需宿主配置 mcp.allow_write）
+  optional bool allow_write = 6;
+  // 可见根目录 file_id（空 = 整棵树）
+  optional string root_folder_id = 7;
+  // 可见根目录路径（展示用，可空）
+  optional string root_folder_path = 8;
+  optional google.protobuf.Timestamp created_at = 9;
+  optional google.protobuf.Timestamp expires_at = 10;
+  optional google.protobuf.Timestamp last_used_at = 11;
+  // 是否已过期（过期令牌仍在列表里，方便看清为什么连不上）
+  optional bool expired = 12;
+}
+
+// CreateMcpTokenReq 签发令牌
+message CreateMcpTokenReq {
+  // 客户端标签（必填，便于日后撤销时认出来）
+  optional string name = 1;
+  // 是否允许写工具（默认只读）
+  optional bool allow_write = 2;
+  // 可见根目录 file_id（空 = 整棵树；必须是自己的目录）
+  optional string root_folder_id = 3;
+  // 有效期（天，0 = 不过期）
+  optional uint32 expires_in_days = 4;
+}
+
+// CreateMcpTokenResp 签发结果（plaintext 只在这里出现一次）
+message CreateMcpTokenResp {
+  optional McpTokenInfo token = 1;
+  // 令牌明文，形如 pfm_mcp_xxx；关闭页面后就再也看不到
+  optional string plaintext = 2;
+}
+
+// ListMcpTokensReq 列出令牌（只列自己的；管理员可指定 owner_id 查他人）
+message ListMcpTokensReq {
+  // 管理员查指定用户；普通用户忽略此字段
+  optional string owner_id = 1;
+}
+
+// ListMcpTokensResp 令牌列表（不含明文）
+message ListMcpTokensResp {
+  repeated McpTokenInfo tokens = 1;
+}
+
+// RevokeMcpTokenReq 撤销令牌（删行，立即失效）
+message RevokeMcpTokenReq {
+  optional uint32 id = 1;
+}
+
+// McpTokenService MCP 令牌管理
+service McpTokenService {
+  // 签发令牌（明文只返回这一次）
+  rpc CreateMcpToken(CreateMcpTokenReq) returns (BaseResp);
+  // 列出令牌（自己的；管理员可查他人）
+  rpc ListMcpTokens(ListMcpTokensReq) returns (BaseResp);
+  // 撤销令牌
+  rpc RevokeMcpToken(RevokeMcpTokenReq) returns (BaseResp);
 }
